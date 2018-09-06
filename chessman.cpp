@@ -1,4 +1,6 @@
 #include "chessman.h"
+#include <QPainter>
+#include <QStyleOptionGraphicsItem>
 
 extern qreal GRID_SIZE;
 
@@ -39,4 +41,23 @@ void ChessMan::setPositon(int _x, int _y){
     ypos = _y;
 
     setPos(xpos*GRID_SIZE,ypos*GRID_SIZE);
+}
+
+void ChessMan::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
+                                QWidget *widget)
+{
+    Q_UNUSED(widget);
+    Q_UNUSED(option);
+
+    painter->setRenderHint(QPainter::SmoothPixmapTransform);
+
+    painter->drawPixmap(this->offset(),this->pixmap());
+}
+
+QRectF ChessMan::boundingRect() const
+{
+    if (pixmap().isNull())
+        return QRectF();
+
+    return QRectF(offset(), pixmap().size() / pixmap().devicePixelRatio());
 }

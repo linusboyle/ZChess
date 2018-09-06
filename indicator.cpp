@@ -34,6 +34,13 @@ void Indicator::paint(QPainter *painter,
     painter->drawEllipse(QPoint(x*GRID_SIZE,y*GRID_SIZE),RADIUS_IND,RADIUS_IND);
 }
 
+QPainterPath Indicator::shape() const {
+    QPainterPath path;
+    path.addEllipse(QPoint(x*GRID_SIZE,y*GRID_SIZE),RADIUS_IND,RADIUS_IND);
+
+    return path;
+}
+
 int Indicator::getX() const
 {
     return x;

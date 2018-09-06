@@ -16,6 +16,8 @@ public:
 
     enum {Type = UserType +1 };
 
+    void paint(QPainter* painter,const QStyleOptionGraphicsItem* option,QWidget* widget) override;
+    QRectF boundingRect() const override;
 
     int id() const;
     int getXpos() const;
