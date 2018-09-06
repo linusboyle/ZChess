@@ -23,9 +23,9 @@ void Indicator::paint(QPainter *painter,
     QBrush brush;
 
     if(option->state & QStyle::State_MouseOver){
-        brush = Qt::red;
-    } else {
         brush = Qt::darkGray;
+    } else {
+        brush = Qt::red;
     }
 
     painter->setPen(pen);

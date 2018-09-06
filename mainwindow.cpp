@@ -12,6 +12,7 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QThread>
 
 extern constexpr int DEFAULT_PORT = 6700;
 
@@ -29,7 +30,8 @@ MainWindow::MainWindow(QWidget *parent):
 
     connect(ui->quitaction,&QAction::triggered,[this](){
         abortGame(false);
-
+        if(m_socket&&m_socket->state() == QTcpSocket::ConnectedState)
+            m_socket->waitForBytesWritten(3000);
         qApp->quit();
     });
 
@@ -127,8 +129,8 @@ void MainWindow::onServerNewConnection(){
         QTcpSocket* connection = m_server->nextPendingConnection();
 
         if(connection){
-            if(m_socket)
-                m_socket->deleteLater();
+//            if(m_socket)
+//                m_socket->deleteLater();
             m_socket = connection;
             //close messagebox
             m_waitingmessage->accept();
@@ -150,8 +152,8 @@ void MainWindow::onClientConnectionRequest(QString ip,int port){
     QTcpSocket* connection = new QTcpSocket(this);
 
     connect(connection,&QTcpSocket::connected,[this,connection](){
-        if(m_socket)
-           m_socket->deleteLater();
+//        if(m_socket)
+//           m_socket->deleteLater();
         m_socket = connection;
         m_connectingmessage->accept();
         initGame();
@@ -175,6 +177,8 @@ void MainWindow::abortGame(bool passive)
         informAbortion();
     }
 
+    m_centralwidget->reset();
+
     if(m_currentgame)
         m_currentgame->resetGame();
 
@@ -187,12 +191,20 @@ void MainWindow::abortGame(bool passive)
     ui->actionS_urrender->setEnabled(false);
 
     m_centralwidget->log(tr("Game ends"));
+
+    if(m_socket
+            &&m_socket->state() == QTcpSocket::ConnectedState
+            && m_socket->waitForBytesWritten()){
+        m_socket->deleteLater();
+        m_socket = nullptr;
+    }
 }
 
 void MainWindow::initGame(){
     if(!m_currentgame){
         m_currentgame = new Game(this);
         connect(m_currentgame,&Game::opponentAborted,this,[this](){
+                    m_centralwidget->log(tr("Your opponent has aborted the game"));
                     QMessageBox::warning(this,
                                          tr("Aborted!"),
                                          tr("Your opponent has aborted the game!"),
@@ -201,6 +213,7 @@ void MainWindow::initGame(){
                 },Qt::QueuedConnection);
 
         connect(m_currentgame,&Game::opponentSurrender,this,[this](){
+                    m_centralwidget->log(tr("Your opponent has surrendered"));
                     QMessageBox::information(this,
                                          tr("Surrender!"),
                                          tr("Your opponent has surrendered!You Win!"),
@@ -208,39 +221,70 @@ void MainWindow::initGame(){
                     this->abortGame(true);
                 },Qt::QueuedConnection);
 
-        connect(m_currentgame,&Game::startGame,m_chessboard,&ChessBoard::initBoardState,
-                Qt::QueuedConnection);
-        connect(m_currentgame,&Game::switchSide,m_chessboard,&ChessBoard::setEnable,
-                Qt::QueuedConnection);
+        connect(m_currentgame,&Game::startGame,this,[this](){
+                    m_chessboard->initBoardState();
+                    m_centralwidget->start();
+                    m_centralwidget->log(tr("The Game Starts"));
+                },Qt::QueuedConnection);
+
+        connect(m_currentgame,&Game::switchSide,this,[this](int side){
+                    m_chessboard->setEnable(side);
+                    if(side == 0){
+                        m_centralwidget->log(tr("Now it's opponent's turn"));
+                    } else {
+                        m_centralwidget->log(tr("Now it's your turn"));
+                    }
+                    m_centralwidget->recalc();
+                }, Qt::QueuedConnection);
 
         connect(m_currentgame,&Game::forwardMessage,
                 this,&MainWindow::sendMessage);
 
-        connect(m_chessboard,&ChessBoard::chessMoved,m_currentgame,&Game::onMoved,
-                Qt::QueuedConnection);
-        connect(m_chessboard,&ChessBoard::chessEaten,m_currentgame,&Game::onEaten,
-                Qt::QueuedConnection);
-        connect(m_currentgame,&Game::chessMoved,m_chessboard,&ChessBoard::moveChess,
-                Qt::QueuedConnection);
+        connect(m_chessboard,&ChessBoard::chessMoved,this,[this](int id,int x,int y){
+                    m_currentgame->onMoved(id,x,y);
+                    m_centralwidget->log(tr("Chess %1 moved to (%2,%3)")
+                                         .arg(getChessName(id))
+                                         .arg(x).arg(y));
+                },Qt::QueuedConnection);
+
+        connect(m_chessboard,&ChessBoard::chessEaten,this,[this](int id){
+                    m_currentgame->onEaten(id);
+                    m_centralwidget->log(tr("Chess %1 eaten")
+                                         .arg(getChessName(id)));
+                },Qt::QueuedConnection);
+
+        connect(m_currentgame,&Game::chessMoved,this,[this](int id,int x,int y){
+                    m_chessboard->moveChess(id,x,y);
+                    m_centralwidget->log(tr("Chess %1 moved to (%2,%3)")
+                                         .arg(getChessName(id))
+                                         .arg(x).arg(y));
+                }, Qt::QueuedConnection);
 
         connect(m_currentgame,&Game::endGame,this,[this](bool redwin){
-            QMessageBox message(QMessageBox::NoIcon,tr("Game End"),
-                                redwin?tr("The Red Win!"):tr("The Black Win!"),
-                                QMessageBox::Ok,this);
-            message.exec();
-            this->abortGame(true);
-        },
-        Qt::QueuedConnection);
+                    m_centralwidget->reset();
+                    m_centralwidget->log(redwin ?
+                                             tr("The Red Wins") : tr("The Black wins"));
+                    QMessageBox message(QMessageBox::NoIcon,tr("Game End"),
+                                        redwin?tr("The Red Wins!"):tr("The Black Wins!"),
+                                        QMessageBox::Ok,this);
+                    message.exec();
+                    this->abortGame(true);
+                },Qt::QueuedConnection);
 
         connect(m_currentgame,&Game::endTimeout,this,[this](bool redwin){
-            QMessageBox message(QMessageBox::NoIcon,tr("Game End"),
-                                redwin?tr("The Black Timeout\nThe Red Win!"):
-                                       tr("The Red Timeout\nThe Black Win!"),
-                                QMessageBox::Ok,this);
-            message.exec();
-            this->abortGame(true);
-        },
-        Qt::QueuedConnection);
+                    m_centralwidget->reset();
+                    m_centralwidget->log(redwin ?
+                                        tr("The Black Timeout") : tr("The Red Timeout"));
+                    m_centralwidget->log(redwin ?
+                                        tr("The Red Wins") : tr("The Black wins"));
+
+                    QMessageBox message(QMessageBox::NoIcon,tr("Game End"),
+                                        redwin?tr("The Black Timeout\nThe Red Wins!"):
+                                               tr("The Red Timeout\nThe Black Wins!"),
+                                        QMessageBox::Ok,this);
+                    message.exec();
+                    this->abortGame(true);
+                },Qt::QueuedConnection);
 
     }
 
@@ -307,6 +351,7 @@ void MainWindow::surrender(){
         qDebug()<<"message write:"<<document;
         m_socket->write(document.toBinaryData());
 
+        m_centralwidget->log(tr("You Surrendered!"));
         abortGame(true);
     }
 }

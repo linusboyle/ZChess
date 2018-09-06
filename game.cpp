@@ -8,7 +8,7 @@
 #include <QDebug>
 #endif
 
-static constexpr int TIMEOUT_MS = 600000; //60s
+extern constexpr int TIMEOUT_MS = 60000; //60s
 
 Game::Game(QObject *parent):
     QObject(parent),

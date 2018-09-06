@@ -244,16 +244,6 @@ void ChessBoard::initBoardState(){
 }
 
 void ChessBoard::clearBoard(){
-//    QHashIterator<QPair<int,int>,ChessMan*> iterator(m_chessmen);
-//    while(iterator.hasNext()){
-//        iterator.next();
-
-//        removeItem(iterator.value());
-//        delete iterator.value();
-//    }
-
-//    m_chessmen.clear();
-//    clearSelection();
     m_chessmen.clear();
     m_indicators.clear();
     clear();

@@ -48,6 +48,60 @@ private:
     ChessBoard* m_chessboard;
     GamePlayArea* m_centralwidget;
 
+    static QString getChessName(int id){
+    switch (id) {
+        case 0:
+        case 1:
+            return tr("Red Advisor");
+        case 2:
+            return tr("Red General");
+        case 3:
+        case 4:
+            return tr("Red Elephant");
+        case 5:
+        case 6:
+            return tr("Red Horse");
+        case 7:
+        case 8:
+            return tr("Red Chariot");
+        case 9:
+        case 10:
+            return tr("Red Cannon");
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+            return tr("Red Soldier");
+        case 16:
+        case 17:
+            return tr("Black Advisor");
+        case 18:
+            return tr("Black General");
+        case 19:
+        case 20:
+            return tr("Black Elephant");
+        case 21:
+        case 22:
+            return tr("Black Horse");
+        case 23:
+        case 24:
+            return tr("Black Chariot");
+        case 25:
+        case 26:
+            return tr("Black Cannon");
+        case 27:
+        case 28:
+        case 29:
+        case 30:
+        case 31:
+            return tr("Black Soldier");
+        default:
+            Q_UNREACHABLE();
+            break;
+    }
+}
+
     void startWaiting();
     void informAbortion();
     void initGame();
