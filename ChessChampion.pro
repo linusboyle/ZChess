@@ -31,7 +31,8 @@ SOURCES += \
     connectiondialog.cpp \
     chessboard.cpp \
     chessman.cpp \
-    indicator.cpp
+    indicator.cpp \
+    gameplayarea.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -39,7 +40,8 @@ HEADERS += \
     connectiondialog.h \
     chessboard.h \
     chessman.h \
-    indicator.h
+    indicator.h \
+    gameplayarea.h
 
 FORMS += \
         mainwindow.ui

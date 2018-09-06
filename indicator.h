@@ -15,8 +15,6 @@ public:
 
     void paint(QPainter *painter,
                const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-//protected:
-//    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event) override;
 
     int getX() const;
     int getY() const;

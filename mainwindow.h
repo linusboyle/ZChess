@@ -10,6 +10,7 @@ class ConnectionDialog;
 class QTcpSocket;
 class ChessBoard;
 class QGraphicsView;
+class GamePlayArea;
 
 namespace Ui {
 class MainWindow;
@@ -29,6 +30,7 @@ private slots:
 
     void onServerNewConnection();
     void onClientConnectionRequest(QString,int);
+    void surrender();
 
     void sendMessage(QByteArray message);
 //    void initBoard();
@@ -44,7 +46,7 @@ private:
     ConnectionDialog* m_connectdialog;
 
     ChessBoard* m_chessboard;
-    QGraphicsView* m_centralwidget;
+    GamePlayArea* m_centralwidget;
 
     void startWaiting();
     void informAbortion();

@@ -8,15 +8,17 @@
 #include <QDebug>
 #endif
 
+static constexpr int TIMEOUT_MS = 600000; //60s
+
 Game::Game(QObject *parent):
     QObject(parent),
     m_state(G_BEFORE_START),
     m_side(P_MAX)
 {
     m_timer = new QTimer(this);
-    m_timer->setInterval(10000);
+    m_timer->setInterval(TIMEOUT_MS);
 
-    connect(m_timer,&QTimer::timeout,this,&Game::onTimerElapsed);
+    connect(m_timer,&QTimer::timeout,this,&Game::timeout);
 }
 
 void Game::resetGame(){
@@ -82,6 +84,9 @@ void Game::onIncomingMessage(QByteArray message){
         onOpponentMoved(id,x,y);
     }
         break;
+    case MESSAGE_SURRENDER:
+        emit opponentSurrender();
+        break;
     default:
         qDebug()<<"other...";
         Q_UNREACHABLE();
@@ -103,7 +108,7 @@ void Game::onRequestStart(){
     }
 }
 
-void Game::onTimerElapsed(){
+void Game::changeTurn(){
     qDebug()<<"switch side";
 
     if(m_side == P_RED){
@@ -144,17 +149,48 @@ void Game::onMoved(int id, int newx, int newy){
     forwardMessage(document.toBinaryData());
 
     //restart the timer,and switch side
-    this->onTimerElapsed();
+    this->changeTurn();
     m_timer->start();
 }
 
 void Game::onOpponentMoved(int id, int x, int y){
-    //request the board to update
     m_timer->stop();
 
+    //request the board to update
     emit chessMoved(id,x,y);
 
     //switch side
-    this->onTimerElapsed();
+    this->changeTurn();
     m_timer->start();
+}
+
+void Game::onEaten(int id){
+    if(id == 2){
+        //black win
+        emit endGame(false);
+        return;
+    } else if(id == 18){
+        //red win
+        emit endGame(true);
+        return;
+    }
+
+    //TODO
+    //do something when chess is eaten
+}
+
+void Game::timeout(){
+    m_timer->stop();
+
+    if(m_state == G_RED){
+        //red timeout,black win
+        emit endTimeout(false);
+    } else {
+        //red win
+        emit endTimeout(true);
+    }
+
+    //IDEA
+    //don't intend to tell the other the timeout,it will timeout when receiving no
+    //move fallback from the other side
 }

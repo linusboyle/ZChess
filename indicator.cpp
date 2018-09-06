@@ -12,6 +12,7 @@ Indicator::Indicator(int x, int y, QGraphicsItem *parent)
 {
     setZValue(1);
     setFlags(ItemIsSelectable);
+    setAcceptHoverEvents(true);
 }
 
 void Indicator::paint(QPainter *painter,
@@ -21,10 +22,10 @@ void Indicator::paint(QPainter *painter,
     QPen pen(Qt::NoPen);
     QBrush brush;
 
-    if(option->state == QStyle::State_MouseOver){
-        brush = Qt::darkGray;
-    } else {
+    if(option->state & QStyle::State_MouseOver){
         brush = Qt::red;
+    } else {
+        brush = Qt::darkGray;
     }
 
     painter->setPen(pen);
@@ -46,9 +47,3 @@ int Indicator::getY() const
 QRectF Indicator::boundingRect() const {
     return QRectF(x*GRID_SIZE-RADIUS_IND,y*GRID_SIZE-RADIUS_IND,RADIUS_IND*2,RADIUS_IND*2);
 }
-
-//void Indicator::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event){
-//    Q_UNUSED(event);
-
-//    qDebug()<<"double click";
-//}

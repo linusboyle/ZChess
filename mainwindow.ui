@@ -36,6 +36,7 @@
      <string>&amp;Game</string>
     </property>
     <addaction name="action_Start"/>
+    <addaction name="actionS_urrender"/>
    </widget>
    <widget class="QMenu" name="menuGeneral">
     <property name="title">
@@ -70,6 +71,11 @@
   <action name="quitaction">
    <property name="text">
     <string>&amp;Quit</string>
+   </property>
+  </action>
+  <action name="actionS_urrender">
+   <property name="text">
+    <string>S&amp;urrender</string>
    </property>
   </action>
  </widget>

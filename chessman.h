@@ -11,7 +11,8 @@ public:
         BLACK = 2,
     };
 
-    ChessMan(int id,int x,int y,Color color,const QPixmap& pixmap,QGraphicsItem* parent = nullptr);
+    ChessMan(int id,int x,int y,Color color,const QPixmap& pixmap,
+             QGraphicsItem* parent = nullptr);
 
     enum {Type = UserType +1 };
 

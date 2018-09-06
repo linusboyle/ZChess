@@ -5,6 +5,7 @@ enum MessageType{
     MESSAGE_ABORT,
     MESSAGE_START,
     MESSAGE_MOVE,
+    MESSAGE_SURRENDER,
 };
 
 class QTcpSocket;
@@ -24,10 +25,17 @@ public slots:
     void start();
     void onIncomingMessage(QByteArray message);
     void onMoved(int id,int newx,int newy);
+    void onEaten(int id);
 
 signals:
     void startGame();
+
+    //ways to end games:end,timeout,abort,surrender
+    void endGame(bool redwin);
+    void endTimeout(bool redwin);
     void opponentAborted();
+    void opponentSurrender();
+
     void forwardMessage(QByteArray message);
     void switchSide(int side);
     void chessMoved(int id,int x,int y);
@@ -54,7 +62,8 @@ private:
     QTimer* m_timer;
 
 private slots:
-    void onTimerElapsed();
+    void changeTurn();
+    void timeout();
 };
 
 

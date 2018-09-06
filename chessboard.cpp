@@ -244,16 +244,20 @@ void ChessBoard::initBoardState(){
 }
 
 void ChessBoard::clearBoard(){
-    QHashIterator<QPair<int,int>,ChessMan*> iterator(m_chessmen);
-    while(iterator.hasNext()){
-        iterator.next();
+//    QHashIterator<QPair<int,int>,ChessMan*> iterator(m_chessmen);
+//    while(iterator.hasNext()){
+//        iterator.next();
 
-        removeItem(iterator.value());
-        delete iterator.value();
-    }
+//        removeItem(iterator.value());
+//        delete iterator.value();
+//    }
 
+//    m_chessmen.clear();
+//    clearSelection();
     m_chessmen.clear();
-    clearSelection();
+    m_indicators.clear();
+    clear();
+    drawBoard();
 }
 
 void ChessBoard::chessSelected(){
@@ -731,7 +735,7 @@ void ChessBoard::moveChess(int id, int x, int y){
             ChessMan* eaten = m_chessmen.take(pair);
             removeItem(eaten);
 
-//            emit chessEaten(eaten->id());
+            emit chessEaten(eaten->id());
             delete eaten;
         }
 
