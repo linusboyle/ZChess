@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>400</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuConnection">
+    <property name="title">
+     <string>&amp;Connection</string>
+    </property>
+    <addaction name="action_Host_Game"/>
+    <addaction name="actionConnect_to_Game"/>
+    <addaction name="action_Abort_Connection"/>
+   </widget>
+   <widget class="QMenu" name="menu_Game">
+    <property name="title">
+     <string>&amp;Game</string>
+    </property>
+    <addaction name="action_Start"/>
+   </widget>
+   <widget class="QMenu" name="menuGeneral">
+    <property name="title">
+     <string>Gene&amp;ral</string>
+    </property>
+    <addaction name="quitaction"/>
+   </widget>
+   <addaction name="menuGeneral"/>
+   <addaction name="menuConnection"/>
+   <addaction name="menu_Game"/>
+  </widget>
+  <action name="action_Host_Game">
+   <property name="text">
+    <string>&amp;Host Game</string>
+   </property>
+  </action>
+  <action name="actionConnect_to_Game">
+   <property name="text">
+    <string>&amp;Connect to Game</string>
+   </property>
+  </action>
+  <action name="action_Abort_Connection">
+   <property name="text">
+    <string>&amp;Abort Connection</string>
+   </property>
+  </action>
+  <action name="action_Start">
+   <property name="text">
+    <string>&amp;Start</string>
+   </property>
+  </action>
+  <action name="quitaction">
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/兵.png</file>
+        <file>resources/車.png</file>
+        <file>resources/黑車.png</file>
+        <file>resources/黑马.png</file>
+        <file>resources/黑炮.png</file>
+        <file>resources/黑象.png</file>
+        <file>resources/将.png</file>
+        <file>resources/马.png</file>
+        <file>resources/炮.png</file>
+        <file>resources/士.png</file>
+        <file>resources/仕.png</file>
+        <file>resources/帥.png</file>
+        <file>resources/相.png</file>
+        <file>resources/卒.png</file>
+    </qresource>
+</RCC>
