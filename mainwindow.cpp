@@ -175,7 +175,8 @@ void MainWindow::abortGame(bool passive)
         informAbortion();
     }
 
-    m_currentgame->resetGame();
+    if(m_currentgame)
+        m_currentgame->resetGame();
 
     m_chessboard->clearBoard();
 
@@ -279,7 +280,8 @@ void MainWindow::informAbortion(){
     document.setObject(message);
 
     qDebug()<<"message write:"<<document;
-    m_socket->write(document.toBinaryData());
+    if(m_socket)
+        m_socket->write(document.toBinaryData());
 }
 
 /*
@@ -288,7 +290,8 @@ void MainWindow::informAbortion(){
 
 void MainWindow::sendMessage(QByteArray message){
     qDebug()<<"message write:"<<message;
-    m_socket->write(message);
+    if(m_socket)
+        m_socket->write(message);
 }
 
 void MainWindow::surrender(){
