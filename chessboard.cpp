@@ -4,6 +4,7 @@
 #include "musicplayerdaemon.h"
 #include <QDebug>
 #include <QApplication>
+#include <QFontDatabase>
 
 extern constexpr qreal GRID_SIZE = 60;
 
@@ -12,8 +13,8 @@ ChessBoard::ChessBoard(QObject *parent)
       m_selected(nullptr)
 {
     setBackgroundBrush(QColor(209,189,152));
+    font_id = QFontDatabase::addApplicationFont(":/resources/font.ttf");
     drawBoard();
-
     connect(this,&ChessBoard::selectionChanged,this,&ChessBoard::chessSelected,
             Qt::QueuedConnection);
 }
@@ -46,8 +47,15 @@ void ChessBoard::drawBoard(){
 
     basey+=(ROW_NUM-1)*GRID_SIZE;
     //river
-    addRect(basex,basey,GRID_SIZE*(COLUMN_NUM-1),GRID_SIZE*(ROW_NUM-1),
+    QFont font(QFontDatabase::applicationFontFamilies(font_id).at(0),30);
+
+    addRect(basex,basey,GRID_SIZE*(COLUMN_NUM-1),GRID_SIZE,
             pen,brush);
+    auto text = addText("楚河      漢界",font);
+
+    auto rect = text->boundingRect();
+    text->setPos(basex+GRID_SIZE*(COLUMN_NUM-1)/2-rect.width()/2,
+                 basey+GRID_SIZE/2-rect.height()/2);
 
     basey+=GRID_SIZE;
     //second part
@@ -83,8 +91,6 @@ void ChessBoard::drawBoard(){
     drawDecoration(1,7);
     drawDecoration(7,7);
 
-    //TODO
-    //draw the text
 }
 
 void ChessBoard::drawDecoration(int x, int y){
@@ -758,7 +764,6 @@ void ChessBoard::move(ChessMan *chess, int x, int y){
     QList<QPoint> nextHint = getHint(chess);
     if(nextHint.contains(redgeneral)||nextHint.contains(blackgeneral)){
         MusicPlayerDaemon::instance()->playCheckedMusic();
-        qDebug()<<"GENEREAL CHECKED!";
     }
 }
 
@@ -834,7 +839,6 @@ void ChessBoard::moveChess(int id, int x, int y){
         QList<QPoint> nextHint = getHint(chess);
         if(nextHint.contains(redgeneral)||nextHint.contains(blackgeneral)){
             MusicPlayerDaemon::instance()->playCheckedMusic();
-            qDebug()<<"GENEREAL CHECKED!";
         }
 
         return;
@@ -1094,6 +1098,112 @@ QPoint ChessBoard::mapToBoard(int x, int y){
     return QPoint(x,TOTAL_ROW-1-y);
 }
 
-QPoint ChessBoard::mapToFile(int x, int y){
-    return QPoint(x,TOTAL_ROW-1-y);
+QString ChessBoard::dumpMap(){
+    QMap<int,ChessMan*> chessmen;
+
+    QHashIterator<QPair<int,int>,ChessMan*> iterator(m_chessmen);
+    while(iterator.hasNext()){
+        iterator.next();
+
+        chessmen.insert(iterator.value()->id(),iterator.value());
+    }
+
+#define APPEND(ID) if(chessmen.contains(ID)){ \
+                        line.append(QString(" <%1,%2>")\
+                                    .arg(chessmen.value(ID)->getXpos())\
+                                    .arg(TOTAL_ROW-1-chessmen.value(ID)->getYpos()));\
+                        count++;\
+                   }\
+
+    int count = 0;
+    QString retval;
+
+    retval.append("red\n");
+    retval.append("1 ").append(QString("<%1,%2>\n").arg(chessmen.value(2)->getXpos())
+                               .arg(TOTAL_ROW-1-chessmen.value(2)->getYpos()));
+
+    QString line;
+    APPEND(0);
+    APPEND(1);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(3);
+    APPEND(4);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(5);
+    APPEND(6);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(7);
+    APPEND(8);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(9);
+    APPEND(10);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(11);
+    APPEND(12);
+    APPEND(13);
+    APPEND(14);
+    APPEND(15);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    retval.append("black\n");
+    retval.append("1 ").append(QString("<%1,%2>\n").arg(chessmen.value(18)->getXpos())
+                               .arg(TOTAL_ROW-1-chessmen.value(18)->getYpos()));
+
+    APPEND(16);
+    APPEND(17);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(19);
+    APPEND(20);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(21);
+    APPEND(22);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(23);
+    APPEND(24);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(25);
+    APPEND(26);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    APPEND(27);
+    APPEND(28);
+    APPEND(29);
+    APPEND(30);
+    APPEND(31);
+    retval.append(QString::number(count)+line).append('\n');
+    count = 0;
+    line.clear();
+
+    return retval;
 }

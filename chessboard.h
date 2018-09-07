@@ -15,6 +15,7 @@ class ChessBoard:public QGraphicsScene
     Q_OBJECT
 public:
     ChessBoard(QObject* parent = nullptr);
+    QString dumpMap();
 
 public slots:
     void initBoardState();
@@ -46,7 +47,6 @@ private:
     bool checkSameColor(ChessMan* chess,int x,int y);
     int countBetween(int column,int y1,int y2);
     QPoint mapToBoard(int x,int y);
-    QPoint mapToFile(int x,int y);
     QPoint getPos(int id);
 
     QHash<QPair<int,int>,ChessMan*> m_chessmen;
@@ -54,6 +54,8 @@ private:
     ChessMan* m_selected;
     QPoint redgeneral;
     QPoint blackgeneral;
+
+    int font_id;
 
 private slots:
     void chessSelected();

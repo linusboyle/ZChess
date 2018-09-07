@@ -33,9 +33,10 @@ private slots:
     void surrender();
 
     void sendMessage(QByteArray message);
-//    void initBoard();
 
     void on_action_Load_Map_triggered();
+
+    void on_action_Save_Map_triggered();
 
 private:
     Ui::MainWindow *ui;

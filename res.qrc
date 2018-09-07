@@ -16,5 +16,6 @@
         <file>resources/卒.png</file>
         <file>resources/chessdown.mp3</file>
         <file>resources/check.wav</file>
+        <file>resources/font.ttf</file>
     </qresource>
 </RCC>

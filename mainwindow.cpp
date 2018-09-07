@@ -14,8 +14,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QThread>
-#include <QFile>
 #include <QFileDialog>
+#include <QFontDatabase>
 
 extern constexpr int DEFAULT_PORT = 6700;
 
@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent):
     m_currentgame(nullptr),
     m_socket(nullptr)
 {
+
     ui->setupUi(this);
     ui->action_Abort_Connection->setEnabled(false);
     ui->action_Start->setEnabled(false);
@@ -195,6 +196,7 @@ void MainWindow::abortGame(bool passive)
     ui->action_Host_Game->setEnabled(true);
     ui->action_Abort_Connection->setEnabled(false);
     ui->action_Start->setEnabled(false);
+    ui->action_Load_Map->setEnabled(true);
     ui->actionS_urrender->setEnabled(false);
 
     m_centralwidget->log(tr("Game ends"));
@@ -232,6 +234,7 @@ void MainWindow::initGame(){
         connect(m_currentgame,&Game::startGame,this,[this](QString map){
                     ui->actionS_urrender->setEnabled(true);
                     ui->action_Start->setEnabled(false);
+                    ui->action_Load_Map->setEnabled(false);
 
                     if(map != mapinfo){
                         m_chessboard->clearBoard();
@@ -386,6 +389,21 @@ void MainWindow::on_action_Load_Map_triggered()
             mapinfo = stream.readAll();
             m_chessboard->initBoardState(mapinfo);
             m_chessboard->setEnable(0);
+        }
+    }
+
+}
+
+void MainWindow::on_action_Save_Map_triggered()
+{
+    QString filename = QFileDialog::getSaveFileName(this,tr("Save Map File"),
+                                QCoreApplication::applicationDirPath());
+
+    if(!filename.isEmpty()){
+        QFile file(filename);
+        if(file.open(QFile::WriteOnly|QFile::Text)){
+            QTextStream stream(&file);
+            stream << m_chessboard->dumpMap();
         }
     }
 }
