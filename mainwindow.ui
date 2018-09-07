@@ -43,6 +43,7 @@
      <string>Gene&amp;ral</string>
     </property>
     <addaction name="quitaction"/>
+    <addaction name="action_Load_Map"/>
    </widget>
    <addaction name="menuGeneral"/>
    <addaction name="menuConnection"/>
@@ -76,6 +77,11 @@
   <action name="actionS_urrender">
    <property name="text">
     <string>S&amp;urrender</string>
+   </property>
+  </action>
+  <action name="action_Load_Map">
+   <property name="text">
+    <string>&amp;Load Map</string>
    </property>
   </action>
  </widget>

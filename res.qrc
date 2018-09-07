@@ -14,5 +14,7 @@
         <file>resources/帥.png</file>
         <file>resources/相.png</file>
         <file>resources/卒.png</file>
+        <file>resources/chessdown.mp3</file>
+        <file>resources/check.wav</file>
     </qresource>
 </RCC>

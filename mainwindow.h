@@ -35,6 +35,8 @@ private slots:
     void sendMessage(QByteArray message);
 //    void initBoard();
 
+    void on_action_Load_Map_triggered();
+
 private:
     Ui::MainWindow *ui;
     QTcpServer* m_server;
@@ -47,6 +49,8 @@ private:
 
     ChessBoard* m_chessboard;
     GamePlayArea* m_centralwidget;
+
+    QString mapinfo;
 
     static QString getChessName(int id){
     switch (id) {

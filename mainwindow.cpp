@@ -4,6 +4,7 @@
 #include "chessboard.h"
 #include "connectiondialog.h"
 #include "gameplayarea.h"
+#include "musicplayerdaemon.h"
 
 #include <QInputDialog>
 #include <QTcpServer>
@@ -13,6 +14,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QThread>
+#include <QFile>
+#include <QFileDialog>
 
 extern constexpr int DEFAULT_PORT = 6700;
 
@@ -29,9 +32,10 @@ MainWindow::MainWindow(QWidget *parent):
     ui->actionS_urrender->setEnabled(false);
 
     connect(ui->quitaction,&QAction::triggered,[this](){
-        abortGame(false);
-        if(m_socket&&m_socket->state() == QTcpSocket::ConnectedState)
+        if(m_socket&&m_socket->state() == QTcpSocket::ConnectedState){
+            abortGame(false);
             m_socket->waitForBytesWritten(3000);
+        }
         qApp->quit();
     });
 
@@ -39,6 +43,8 @@ MainWindow::MainWindow(QWidget *parent):
      */
 
     m_chessboard = new ChessBoard(this);
+    m_chessboard->initBoardState();
+    m_chessboard->setEnable(0);
     m_centralwidget = new GamePlayArea(this);
     m_centralwidget->setScene(m_chessboard);
 
@@ -75,11 +81,12 @@ MainWindow::MainWindow(QWidget *parent):
 MainWindow::~MainWindow()
 {
     delete ui;
+    MusicPlayerDaemon::instance()->free();
 }
 
 void MainWindow::on_action_Start_triggered()
 {
-    m_currentgame->start();
+    m_currentgame->start(mapinfo);
     m_centralwidget->log(tr("You are ready for playing,waiting for game start..."));
 
     ui->action_Start->setEnabled(false);
@@ -192,12 +199,13 @@ void MainWindow::abortGame(bool passive)
 
     m_centralwidget->log(tr("Game ends"));
 
-    if(m_socket
-            &&m_socket->state() == QTcpSocket::ConnectedState
-            && m_socket->waitForBytesWritten()){
+    if(m_socket && m_socket->state() == QTcpSocket::ConnectedState
+                && m_socket->waitForBytesWritten()){
         m_socket->deleteLater();
         m_socket = nullptr;
     }
+
+    mapinfo = QString();
 }
 
 void MainWindow::initGame(){
@@ -221,10 +229,20 @@ void MainWindow::initGame(){
                     this->abortGame(true);
                 },Qt::QueuedConnection);
 
-        connect(m_currentgame,&Game::startGame,this,[this](){
-                    m_chessboard->initBoardState();
+        connect(m_currentgame,&Game::startGame,this,[this](QString map){
+                    ui->actionS_urrender->setEnabled(true);
+                    ui->action_Start->setEnabled(false);
+
+                    if(map != mapinfo){
+                        m_chessboard->clearBoard();
+                        m_chessboard->initBoardState(map);
+                        mapinfo = map;
+                    }
+
                     m_centralwidget->start();
-                    m_centralwidget->log(tr("The Game Starts"));
+                    m_centralwidget->log(">>>>>New Game<<<<<");
+                    m_centralwidget->log(tr("The Game Starts!"));
+
                 },Qt::QueuedConnection);
 
         connect(m_currentgame,&Game::switchSide,this,[this](int side){
@@ -299,7 +317,6 @@ void MainWindow::initGame(){
     //enable disconnecting and game options
     ui->action_Abort_Connection->setEnabled(true);
     ui->action_Start->setEnabled(true);
-    ui->actionS_urrender->setEnabled(true);
 
     //information
     QMessageBox::information(this,tr("Connection Established"),
@@ -353,5 +370,22 @@ void MainWindow::surrender(){
 
         m_centralwidget->log(tr("You Surrendered!"));
         abortGame(true);
+    }
+}
+
+void MainWindow::on_action_Load_Map_triggered()
+{
+    QString filename = QFileDialog::getOpenFileName(this,tr("Open Map File"),
+                                 QCoreApplication::applicationDirPath(),
+                                 tr("Text (*.txt)"));
+    if(!filename.isEmpty()){
+        QFile file(filename);
+        if(file.open(QFile::ReadOnly)) {
+            QTextStream stream(&file);
+            m_chessboard->clearBoard();
+            mapinfo = stream.readAll();
+            m_chessboard->initBoardState(mapinfo);
+            m_chessboard->setEnable(0);
+        }
     }
 }

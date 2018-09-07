@@ -18,6 +18,7 @@ public:
 
 public slots:
     void initBoardState();
+    void initBoardState(QString state);
     void clearBoard();
     void setEnable(int side);
     void moveChess(int id,int x,int y);
@@ -26,26 +27,33 @@ private:
     void drawBoard();
     void drawDecoration(int x,int y);
 
-    void displayShiHint(ChessMan* chess);
-    void displayGeneralHint(ChessMan*);
-    void displayXiangHint(ChessMan*);
-    void displayHorseHint(ChessMan*);
-    void displayJuHint(ChessMan*);
-    void displayPaoHint(ChessMan*);
-    void displaySoldierHint(ChessMan*);
+    QList<QPoint> getHint(ChessMan* chess);
 
-    void display(QList<QPoint>);
+    QList<QPoint> getShiHint(ChessMan* chess);
+    QList<QPoint> getGeneralHint(ChessMan*);
+    QList<QPoint> getXiangHint(ChessMan*);
+    QList<QPoint> getHorseHint(ChessMan*);
+    QList<QPoint> getJuHint(ChessMan*);
+    QList<QPoint> getPaoHint(ChessMan*);
+    QList<QPoint> getSoldierHint(ChessMan*);
+
+    void display(const QList<QPoint> &);
 
     void move(ChessMan* chess,int x,int y);
 
     bool exist(int x,int y);
     bool checkValid(int x,int y);
-    bool checkInPalace(int x,int y);
     bool checkSameColor(ChessMan* chess,int x,int y);
+    int countBetween(int column,int y1,int y2);
+    QPoint mapToBoard(int x,int y);
+    QPoint mapToFile(int x,int y);
+    QPoint getPos(int id);
 
     QHash<QPair<int,int>,ChessMan*> m_chessmen;
     QVector<Indicator*> m_indicators;
     ChessMan* m_selected;
+    QPoint redgeneral;
+    QPoint blackgeneral;
 
 private slots:
     void chessSelected();

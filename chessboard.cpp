@@ -1,7 +1,9 @@
 #include "chessboard.h"
 #include "chessman.h"
 #include "indicator.h"
+#include "musicplayerdaemon.h"
 #include <QDebug>
+#include <QApplication>
 
 extern constexpr qreal GRID_SIZE = 60;
 
@@ -123,6 +125,9 @@ void ChessBoard::initBoardState(){
     addItem(man);
     m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
 
+    redgeneral.setX(4);
+    redgeneral.setY(9);
+
     man = new ChessMan(3,2,9,ChessMan::RED,QPixmap(":/resources/相.png"));
     addItem(man);
     m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
@@ -189,6 +194,8 @@ void ChessBoard::initBoardState(){
     man = new ChessMan(18,4,0,ChessMan::BLACK,QPixmap(":/resources/将.png"));
     m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
     addItem(man);
+    blackgeneral.setX(4);
+    blackgeneral.setY(0);
 
     man = new ChessMan(19,2,0,ChessMan::BLACK,QPixmap(":/resources/黑象.png"));
     m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
@@ -271,59 +278,62 @@ void ChessBoard::chessSelected(){
     ChessMan* chess = qgraphicsitem_cast<ChessMan*>(items.first());
     m_selected = chess;
 
+    display(getHint(chess));
+}
+
+QList<QPoint> ChessBoard::getHint(ChessMan *chess){
     switch (chess->id()) {
         case 0:
         case 1:
         case 16:
         case 17:
-            displayShiHint(chess);
-            break;
+            return getShiHint(chess);
         case 2:
         case 18:
-            displayGeneralHint(chess);
-            break;
+            return getGeneralHint(chess);
         case 3:
         case 4:
         case 19:
         case 20:
-            displayXiangHint(chess);
-            break;
+            return getXiangHint(chess);
         case 5:
         case 6:
         case 21:
         case 22:
-            displayHorseHint(chess);
-            break;
+            return getHorseHint(chess);
         case 7:
         case 8:
         case 23:
         case 24:
-            displayJuHint(chess);
-            break;
+            return getJuHint(chess);
         case 9:
         case 10:
         case 25:
         case 26:
-            displayPaoHint(chess);
-            break;
+            return getPaoHint(chess);
         case 11:
         case 12:
         case 13:
         case 14:
         case 15:
-            displaySoldierHint(chess);
-            break;
+            return getSoldierHint(chess);
         default:
-            displaySoldierHint(chess);
-            break;
+            return getSoldierHint(chess);
     }
 }
 
-void ChessBoard::displayShiHint(ChessMan* chess){
-    QList<QPoint> valid;
-
+QList<QPoint> ChessBoard::getShiHint(ChessMan* chess){
     int x = chess->getXpos();
     int y = chess->getYpos();
+
+    QList<QPoint> valid;
+
+    if(redgeneral.x()==blackgeneral.x()){
+        if(x==redgeneral.x()
+           &&y>blackgeneral.y()&&y<redgeneral.y()
+           &&countBetween(x,blackgeneral.y(),redgeneral.y())==1)
+            return valid;
+    }
 
     int dx[4] = {-1,-1,1,1};
     int dy[4] = {-1,1,-1,1};
@@ -344,7 +354,7 @@ void ChessBoard::displayShiHint(ChessMan* chess){
         }
     }
 
-    display(valid);
+    return valid;
 }
 
 bool ChessBoard::checkValid(int x, int y)
@@ -374,7 +384,7 @@ bool ChessBoard::checkSameColor(ChessMan *chess, int x, int y)
     return false;
 }
 
-void ChessBoard::displayGeneralHint(ChessMan* chess){
+QList<QPoint> ChessBoard::getGeneralHint(ChessMan* chess){
     QList<QPoint> valid;
 
     int x = chess->getXpos();
@@ -388,24 +398,31 @@ void ChessBoard::displayGeneralHint(ChessMan* chess){
         if(chess->getColor() == ChessMan::BLACK){
             if(point.x()>=3&&point.x()<=5&&point.y()>=0&&point.y()<=2
                     &&!checkSameColor(chess,point.x(),point.y())){
+
+                    if(point.x()==redgeneral.x()
+                            &&countBetween(point.x(),point.y(),redgeneral.y())==0)
+                        continue;
+
                 valid.append(point);
             }
         }
-        //TODO
-        //general cannot be on the same column
-        //or maybe they can,but just can  eat each other?
         else{
             if(point.x()>=3&&point.x()<=5&&point.y()>=7&&point.y()<=9
                     &&!checkSameColor(chess,point.x(),point.y())){
+
+                    if(point.x()==blackgeneral.x()
+                            &&countBetween(point.x(),blackgeneral.y(),point.y())==0)
+                        continue;
+
                 valid.append(point);
             }
         }
     }
 
-    display(valid);
+    return valid;
 }
 
-void ChessBoard::displayXiangHint(ChessMan* chess){
+QList<QPoint> ChessBoard::getXiangHint(ChessMan* chess){
     QList<QPoint> valid;
 
     int x = chess->getXpos();
@@ -417,6 +434,12 @@ void ChessBoard::displayXiangHint(ChessMan* chess){
     int dx2[4]= {-1,-1,1,1};
     int dy2[4]= {-1,1,-1,1};
 
+    if(x==redgeneral.x()
+       &&redgeneral.x()==blackgeneral.x()
+       &&y>blackgeneral.y()&&y<redgeneral.y()
+       &&countBetween(x,blackgeneral.y(),redgeneral.y())==1)
+            return valid;
+
     for(int i=0;i<4;++i){
         QPoint point(x+dx[i],y+dy[i]);
         if(chess->getColor() == ChessMan::BLACK){
@@ -424,6 +447,7 @@ void ChessBoard::displayXiangHint(ChessMan* chess){
             if(checkValid(point.x(),point.y())&&point.y()<=4
                     &&!exist(x+dx2[i],y+dy2[i])
                     &&!checkSameColor(chess,point.x(),point.y())){
+
                 valid.append(point);
             }
         }
@@ -436,10 +460,10 @@ void ChessBoard::displayXiangHint(ChessMan* chess){
         }
     }
 
-    display(valid);
+    return valid;
 }
 
-void ChessBoard::displayHorseHint(ChessMan* chess){
+QList<QPoint> ChessBoard::getHorseHint(ChessMan* chess){
     QList<QPoint> valid;
 
     int x = chess->getXpos();
@@ -451,6 +475,12 @@ void ChessBoard::displayHorseHint(ChessMan* chess){
     int dx2[8] = {0,-1,0,1,1,0,0,-1};
     int dy2[8] = {-1,0,-1,0,0,1,1,0};
 
+    if(x==redgeneral.x()
+       &&redgeneral.x()==blackgeneral.x()
+       &&y>blackgeneral.y()&&y<redgeneral.y()
+       &&countBetween(x,blackgeneral.y(),redgeneral.y())==1)
+            return valid;
+
     for(int i=0;i<8;++i){
         QPoint point(x+dx[i],y+dy[i]);
         if(checkValid(point.x(),point.y())&&!exist(x+dx2[i],y+dy2[i])
@@ -459,7 +489,7 @@ void ChessBoard::displayHorseHint(ChessMan* chess){
         }
     }
 
-    display(valid);
+    return valid;
 }
 
 bool ChessBoard::exist(int x, int y){
@@ -470,7 +500,7 @@ bool ChessBoard::exist(int x, int y){
     return false;
 }
 
-void ChessBoard::displayJuHint(ChessMan* chess){
+QList<QPoint> ChessBoard::getJuHint(ChessMan* chess){
     QList<QPoint> valid;
 
     int x = chess->getXpos();
@@ -496,6 +526,17 @@ void ChessBoard::displayJuHint(ChessMan* chess){
             break;
         }
     }
+
+    if(x==redgeneral.x()
+       &&redgeneral.x()==blackgeneral.x()
+       &&y>blackgeneral.y()&&y<redgeneral.y()
+       &&countBetween(x,blackgeneral.y(),redgeneral.y())==1){
+        //if between two general,only up and down(well,I think in this circumstance
+        //the owner of the chariot has won..)
+        display(valid);
+        return valid;
+    }
+
     //right
     for(int i=x+1;i<COLUMN_NUM;++i){
         if(!exist(i,y))
@@ -517,14 +558,32 @@ void ChessBoard::displayJuHint(ChessMan* chess){
         }
     }
 
-    display(valid);
+    return valid;
 }
 
-void ChessBoard::displayPaoHint(ChessMan* chess){
+QList<QPoint> ChessBoard::getPaoHint(ChessMan* chess){
     QList<QPoint> valid;
 
     int x = chess->getXpos();
     int y = chess->getYpos();
+
+    if(x==redgeneral.x()
+       &&redgeneral.x()==blackgeneral.x()
+       &&y>blackgeneral.y()&&y<redgeneral.y()
+       &&countBetween(x,blackgeneral.y(),redgeneral.y())==1){
+        //the problem here is cannon can jump through the general
+        //although it's very rare,we should take it into consideration
+            for(int i=y+1;i<TOTAL_ROW;++i){
+                if(!exist(x,i))
+                    valid.append(QPoint(x,i));
+            }
+            //up
+            for(int i=y-1;i>=0;--i){
+                if(!exist(x,i))
+                    valid.append(QPoint(x,i));
+            }
+            return valid;
+    }
 
     //the same column,down
     for(int i=y+1;i<TOTAL_ROW;++i){
@@ -556,6 +615,7 @@ void ChessBoard::displayPaoHint(ChessMan* chess){
             break;
         }
     }
+
     //right
     for(int i=x+1;i<COLUMN_NUM;++i){
         if(!exist(i,y))
@@ -587,10 +647,10 @@ void ChessBoard::displayPaoHint(ChessMan* chess){
         }
     }
 
-    display(valid);
+    return valid;
 }
 
-void ChessBoard::displaySoldierHint(ChessMan* chess){
+QList<QPoint> ChessBoard::getSoldierHint(ChessMan* chess){
     QList<QPoint> valid;
 
     int x = chess->getXpos();
@@ -612,7 +672,15 @@ void ChessBoard::displaySoldierHint(ChessMan* chess){
         }
         for(int i=0;i<limit;++i){
             QPoint point(x+dx[i],y+dy[i]);
-            if(checkValid(point.x(),point.y())){
+            if(x==redgeneral.x()
+               &&redgeneral.x()==blackgeneral.x()
+               &&y>blackgeneral.y()&&y<redgeneral.y()
+               &&countBetween(x,blackgeneral.y(),redgeneral.y())==1
+               &&dx[i]!=0)
+                    continue;
+
+            if(checkValid(point.x(),point.y())&&!checkSameColor(chess,point.x(),point.y()))
+            {
                 valid.append(point);
             }
         }
@@ -624,15 +692,22 @@ void ChessBoard::displaySoldierHint(ChessMan* chess){
         }
         for(int i=0;i<limit;++i){
             QPoint point(x+dxb[i],y+dyb[i]);
-            if(checkValid(point.x(),point.y())){
+            if(x==redgeneral.x()
+               &&redgeneral.x()==blackgeneral.x()
+               &&y>blackgeneral.y()&&y<redgeneral.y()
+               &&countBetween(x,blackgeneral.y(),redgeneral.y())==1
+               &&dx[i]!=0)
+                    continue;
+            if(checkValid(point.x(),point.y())&&!checkSameColor(chess,point.x(),point.y()))
+            {
                 valid.append(point);
             }
         }
     }
-    display(valid);
+    return valid;
 }
 
-void ChessBoard::display(QList<QPoint> valid){
+void ChessBoard::display(const QList<QPoint>& valid){
     int size=m_indicators.size();
 
     for(int i=0;i<size;++i){
@@ -652,8 +727,15 @@ void ChessBoard::display(QList<QPoint> valid){
 }
 
 void ChessBoard::move(ChessMan *chess, int x, int y){
-    //cannot go further when moved
-    setEnable(0);
+
+    //update general positon
+    if(chess->id() == 2){//red general
+        redgeneral.setX(x);
+        redgeneral.setY(y);
+    } else if(chess->id() == 18){
+        blackgeneral.setX(x);
+        blackgeneral.setY(y);
+    }
 
     m_chessmen.remove(QPair<int,int>(chess->getXpos(),chess->getYpos()));
 
@@ -670,6 +752,14 @@ void ChessBoard::move(ChessMan *chess, int x, int y){
     m_chessmen.insert(pair,chess);
 
     emit chessMoved(chess->id(),x,y);
+    MusicPlayerDaemon::instance()->playChessDownMusic();
+
+    //check if the general is checked;
+    QList<QPoint> nextHint = getHint(chess);
+    if(nextHint.contains(redgeneral)||nextHint.contains(blackgeneral)){
+        MusicPlayerDaemon::instance()->playCheckedMusic();
+        qDebug()<<"GENEREAL CHECKED!";
+    }
 }
 
 //switch control actually
@@ -687,7 +777,7 @@ void ChessBoard::setEnable(int side){
     while(iterator.hasNext()){
         iterator.next();
         auto chess = iterator.value();
-        if(chess->id()>=0 && chess->id()<=15){ //red
+        if(chess->getColor() == ChessMan::RED){ //red
             chess->setFlag(QGraphicsItem::ItemIsSelectable,side == 1 ? true:false);
         } else {
             chess->setFlag(QGraphicsItem::ItemIsSelectable,side == 2 ? true:false);
@@ -700,6 +790,16 @@ void ChessBoard::setEnable(int side){
 }
 
 void ChessBoard::moveChess(int id, int x, int y){
+
+    //update general position
+    if(id == 2){//red general
+        redgeneral.setX(x);
+        redgeneral.setY(y);
+    } else if(id == 18){
+        blackgeneral.setX(x);
+        blackgeneral.setY(y);
+    }
+
     QHashIterator<QPair<int,int>,ChessMan*> iterator(m_chessmen);
 
     ChessMan* chess = nullptr;
@@ -709,14 +809,13 @@ void ChessBoard::moveChess(int id, int x, int y){
         auto chessman = iterator.value();
 
         if(chessman->id() == id){
-            chess = chessman;
+            chess = m_chessmen.take(QPair<int,int>(chessman->getXpos(),
+                                                   chessman->getYpos()));
             break;
         }
     }
 
     if(chess){
-        m_chessmen.remove(QPair<int,int>(chess->getXpos(),chess->getYpos()));
-
         chess->setPositon(x,y);
 
         QPair<int,int> pair(x,y);
@@ -730,9 +829,271 @@ void ChessBoard::moveChess(int id, int x, int y){
         }
 
         m_chessmen.insert(pair,chess);
+        MusicPlayerDaemon::instance()->playChessDownMusic();
+
+        QList<QPoint> nextHint = getHint(chess);
+        if(nextHint.contains(redgeneral)||nextHint.contains(blackgeneral)){
+            MusicPlayerDaemon::instance()->playCheckedMusic();
+            qDebug()<<"GENEREAL CHECKED!";
+        }
+
         return;
     }
 
     qDebug()<<"move chess that does not exist?";
     Q_UNREACHABLE();
+}
+
+QPoint ChessBoard::getPos(int id){
+    QHashIterator<QPair<int,int>,ChessMan*> iterator(m_chessmen);
+    while(iterator.hasNext()){
+        iterator.next();
+
+        if(iterator.value()->id() == id){
+            return QPoint(iterator.key().first,iterator.key().second);
+        }
+    }
+    //if does not exist
+
+    qDebug()<<"get position of chess that does not exist";
+    Q_UNREACHABLE();
+}
+
+int ChessBoard::countBetween(int column, int y1, int y2){
+    int retval=0;
+    QHashIterator<QPair<int,int>,ChessMan*> iterator(m_chessmen);
+    while(iterator.hasNext()){
+        iterator.next();
+
+        if(iterator.value()->id() != 2 && iterator.value()->id()!= 18){
+            if(iterator.value()->getXpos() == column){
+                int y = iterator.value()->getYpos();
+                if(y>=y1&&y<=y2){
+                    retval++;
+                } else{
+                    continue;
+                }
+            } else {
+                continue;
+            }
+        }
+    }
+
+    return retval;
+}
+
+void ChessBoard::initBoardState(QString state){
+
+    if(state.isEmpty()){
+        this->initBoardState();
+        return;
+    }
+
+    ChessMan* man;
+    QStringList lines = state.split("\n",QString::SkipEmptyParts);
+    //here,no matter who is first,red will be the first to move;
+
+    while(!lines.isEmpty()){
+        if(lines.first()=="red"){
+            lines.pop_front();
+            int number;
+            QStringList tokens;
+            QString line;
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(2,pos.x(),pos.y(),ChessMan::RED,
+                                   QPixmap(":/resources/帥.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i,pos.x(),pos.y(),ChessMan::RED,
+                                   QPixmap(":/resources/仕.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+3,pos.x(),pos.y(),ChessMan::RED,
+                                   QPixmap(":/resources/相.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+5,pos.x(),pos.y(),ChessMan::RED,
+                                   QPixmap(":/resources/马.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+7,pos.x(),pos.y(),ChessMan::RED,
+                                   QPixmap(":/resources/車.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+9,pos.x(),pos.y(),ChessMan::RED,
+                                   QPixmap(":/resources/炮.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+11,pos.x(),pos.y(),ChessMan::RED,
+                                   QPixmap(":/resources/兵.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+        } else {
+            lines.pop_front();
+            int number;
+            QStringList tokens;
+            QString line;
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(18,pos.x(),pos.y(),ChessMan::BLACK,
+                                   QPixmap(":/resources/将.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+16,pos.x(),pos.y(),ChessMan::BLACK,
+                                   QPixmap(":/resources/士.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+19,pos.x(),pos.y(),ChessMan::BLACK,
+                                   QPixmap(":/resources/黑象.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+21,pos.x(),pos.y(),ChessMan::BLACK,
+                                   QPixmap(":/resources/黑马.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+23,pos.x(),pos.y(),ChessMan::BLACK,
+                                   QPixmap(":/resources/黑車.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+25,pos.x(),pos.y(),ChessMan::BLACK,
+                                   QPixmap(":/resources/黑炮.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+
+            line = lines.takeFirst();
+            tokens = line.split(' ',QString::SkipEmptyParts);
+            number = tokens.takeFirst().toInt();
+            for(int i =0;i<number;++i){
+                QString position = tokens.takeFirst();
+                QPoint pos = mapToBoard(QString(position.at(1)).toInt(),
+                                        QString(position.at(3)).toInt());
+                man = new ChessMan(i+27,pos.x(),pos.y(),ChessMan::BLACK,
+                                   QPixmap(":/resources/卒.png"));
+                addItem(man);
+                m_chessmen.insert(QPair<int,int>(man->getXpos(),man->getYpos()),man);
+            }
+        }
+    }
+}
+
+QPoint ChessBoard::mapToBoard(int x, int y){
+    return QPoint(x,TOTAL_ROW-1-y);
+}
+
+QPoint ChessBoard::mapToFile(int x, int y){
+    return QPoint(x,TOTAL_ROW-1-y);
 }

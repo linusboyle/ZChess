@@ -27,7 +27,7 @@ void Game::resetGame(){
     m_timer->stop();
 }
 
-void Game::start()
+void Game::start(QString map)
 {
     QJsonObject object;
     QJsonDocument document;
@@ -36,29 +36,31 @@ void Game::start()
         object.insert("Type",MESSAGE_START);
         //TODO
         //maybe the color is useless here..
-
         object.insert("Color","RED");
+        object.insert("Map",map);
+
         document.setObject(object);
 
         emit forwardMessage(document.toBinaryData());
         m_state = G_WAIT_FOR_CONFIRM;
-    } else {
-        object.insert("Type",MESSAGE_START);
-        object.insert("Color","BLACK");
-        document.setObject(object);
-
-        emit forwardMessage(document.toBinaryData());
-
-        //the game starts,from the red side
-        m_state = G_RED;
-        m_side = P_BLACK;
-
-        //draw the board gui
-        emit startGame();
-        emit switchSide(0);
-
-        m_timer->start();
     }
+//    } else {
+//        object.insert("Type",MESSAGE_START);
+//        object.insert("Color","BLACK");
+//        document.setObject(object);
+
+//        emit forwardMessage(document.toBinaryData());
+
+//        //the game starts,from the red side
+//        m_state = G_RED;
+//        m_side = P_BLACK;
+
+//        //draw the board gui
+//        emit startGame();
+//        emit switchSide(0);
+
+//        m_timer->start();
+//    }
 }
 
 void Game::onIncomingMessage(QByteArray message){
@@ -74,7 +76,7 @@ void Game::onIncomingMessage(QByteArray message){
         emit opponentAborted();
         break;
     case MESSAGE_START:
-        onRequestStart();
+        onRequestStart(object.value("Map").toString());
         break;
     case MESSAGE_MOVE:
     {
@@ -94,14 +96,33 @@ void Game::onIncomingMessage(QByteArray message){
     }
 }
 
-void Game::onRequestStart(){
+void Game::onRequestStart(QString map){
     if (m_state == G_BEFORE_START){
-        m_state = G_WAIT_FOR_CONFIRM;
+        //send feedback
+        QJsonObject object;
+        QJsonDocument document;
+
+        object.insert("Type",MESSAGE_START);
+        object.insert("Color","BLACK");
+        object.insert("Map",map);
+        document.setObject(object);
+
+        emit forwardMessage(document.toBinaryData());
+
+        //start as black...
+        m_state = G_RED;
+        m_side = P_BLACK;
+
+        emit startGame(map);
+        emit switchSide(0);
+
+        m_timer->start();
     } else {
+        //start as red...
         m_state = G_RED;
         m_side = P_RED;
 
-        emit startGame();
+        emit startGame(map);
         emit switchSide(1);
 
         m_timer->start();

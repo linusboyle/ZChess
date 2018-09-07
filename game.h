@@ -22,13 +22,13 @@ public:
     void resetGame();
 
 public slots:
-    void start();
+    void start(QString map);
     void onIncomingMessage(QByteArray message);
     void onMoved(int id,int newx,int newy);
     void onEaten(int id);
 
 signals:
-    void startGame();
+    void startGame(QString map);
 
     //ways to end games:end,timeout,abort,surrender
     void endGame(bool redwin);
@@ -54,7 +54,7 @@ private:
         P_MAX,
     };
 
-    void onRequestStart();
+    void onRequestStart(QString map);
     void onOpponentMoved(int id,int x,int y);
 
     GameState m_state;

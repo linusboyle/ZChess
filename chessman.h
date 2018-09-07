@@ -1,9 +1,9 @@
 #ifndef CHESSMAN_H
 #define CHESSMAN_H
 
-#include <QGraphicsPixmapItem>
+#include <QGraphicsItem>
 
-class ChessMan :public QGraphicsPixmapItem
+class ChessMan :public QGraphicsItem
 {
 public:
     enum Color{
@@ -36,6 +36,8 @@ private:
     int xpos;
     int ypos;
     Color m_color;
+    QPixmap pixmap;
+    QPoint offset;
 };
 
 #endif // CHESSMAN_H

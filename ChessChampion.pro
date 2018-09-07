@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui network
+QT       += core gui network multimedia
 CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -32,7 +32,8 @@ SOURCES += \
     chessboard.cpp \
     chessman.cpp \
     indicator.cpp \
-    gameplayarea.cpp
+    gameplayarea.cpp \
+    musicplayerdaemon.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -41,7 +42,8 @@ HEADERS += \
     chessboard.h \
     chessman.h \
     indicator.h \
-    gameplayarea.h
+    gameplayarea.h \
+    musicplayerdaemon.h
 
 FORMS += \
         mainwindow.ui
